@@ -1,4 +1,4 @@
-﻿/* ================================================================= 
+﻿/* =================================================================
    WORKIN'STORE — script.js
    HTML5 + CSS3 + JS puro (Vanilla). Persistência: Firebase Auth + RTDB.
    Imagens salvas em Base64 no Realtime Database (sem Storage).
@@ -348,7 +348,6 @@ function renderFooter() {
   const anyFooter = f.company || f.about || f.info || f.copy || links.length || socials.length;
   const footerEl = document.querySelector(".footer");
   if (footerEl) footerEl.style.display = anyFooter ? "" : "none";
-}
 }
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
