@@ -1,4 +1,4 @@
-/* =================================================================
+﻿/* =================================================================
    WORKIN'STORE — style.css
    Visual moderno, minimalista, tecnológico, com glassmorphism discreto.
    ================================================================= */
@@ -77,7 +77,7 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 .logo-horizontal{height:32px;object-fit:contain}
 .logo-square:not([src]),.logo-horizontal:not([src]){display:none}
 .brand::after{
-  content:"Workin'Store";
+  content: var(--brand-name, "");
   font-weight:700;letter-spacing:.5px;font-size:18px;
   background:linear-gradient(90deg,var(--secondary),var(--primary));
   -webkit-background-clip:text;background-clip:text;color:transparent;

@@ -1,4 +1,4 @@
-/* ================================================================= 
+﻿/* =================================================================
    WORKIN'STORE — script.js
    HTML5 + CSS3 + JS puro (Vanilla). Persistência: Firebase Auth + RTDB.
    Imagens salvas em Base64 no Realtime Database (sem Storage).
@@ -37,43 +37,35 @@ const ADMIN_EMAIL = "admin@admin.com";
    ================================================================= */
 const state = {
   site: {
-    title: "Workin'Store",
-    description: "Tecnologia, acessórios e serviços com a confiança que você merece.",
-    keywords: "workin store, loja, tecnologia, playstation 2, acessórios",
+    title: "",
+    description: "",
+    keywords: "",
     colorPrimary: "#6c5ce7",
     colorSecondary: "#00d4ff",
     favicon: "",
     logoSquare: "",
     logoHorizontal: "",
-    heroEyebrow: "Bem-vindo",
-    heroTitle: "Workin'Store",
-    heroSubtitle: "Tecnologia, acessórios e serviços com a confiança que você merece.",
-    aboutText: "A Workin'Store é referência em tecnologia e atendimento personalizado.",
-    supportText: "Precisa de ajuda? Fale conosco pelos canais oficiais.",
+    heroEyebrow: "",
+    heroTitle: "",
+    heroSubtitle: "",
+    aboutText: "",
+    supportText: "",
   },
   banners: {},
   categories: {},
   products: {},
   menu: {},
   footer: {
-    company: "Workin'Store",
-    about: "Tecnologia com propósito.",
+    company: "",
+    about: "",
     info: "",
-    copy: "© " + new Date().getFullYear() + " Workin'Store",
-    links: "",      // "Home|#home\nLoja|#loja"
-    socials: "",    // "Instagram|https://..."
-    contacts: "",   // "WhatsApp|(88) 99999-9999"
+    copy: "",
+    links: "",
+    socials: "",
+    contacts: "",
   },
-  services: [
-    { title: "Assistência Técnica", desc: "Reparos com garantia e agilidade." },
-    { title: "Instalação", desc: "Setup completo e profissional." },
-    { title: "Consultoria", desc: "Escolha o produto certo para você." },
-  ],
-  downloads: [
-    { title: "Manuais", desc: "Guias e documentação técnica." },
-    { title: "Firmwares", desc: "Atualizações oficiais." },
-    { title: "Drivers", desc: "Compatibilidade e desempenho." },
-  ],
+  services: [],
+  downloads: [],
   currentCategory: null,
   currentSearch: "",
   editingProductId: null,
@@ -100,9 +92,13 @@ function toast(msg, type = "") {
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve("");
-    // Compressão leve para reduzir tamanho no RTDB
+    // Preserva PNG/WebP/GIF (mantém transparência); usa JPEG só para fotos.
+    const type = (file.type || "").toLowerCase();
+    const keepAlpha = /png|webp|gif|svg/.test(type);
     const reader = new FileReader();
     reader.onload = () => {
+      // SVG: guarda como data URL original (sem rasterizar)
+      if (type.includes("svg")) { resolve(reader.result); return; }
       const img = new Image();
       img.onload = () => {
         const max = 1200;
@@ -113,8 +109,13 @@ function fileToBase64(file) {
         }
         const canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        resolve(canvas.toDataURL("image/jpeg", 0.85));
+        const ctx = canvas.getContext("2d");
+        // Não preencher fundo: mantém transparência para PNG/WebP/GIF
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        const outType = keepAlpha ? "image/png" : "image/jpeg";
+        const quality = keepAlpha ? undefined : 0.85;
+        resolve(canvas.toDataURL(outType, quality));
       };
       img.onerror = reject;
       img.src = reader.result;
@@ -166,13 +167,19 @@ function subscribeAll() {
 /* =================================================================
    RENDER
    ================================================================= */
+function setHidden(sel, hide) {
+  const el = typeof sel === "string" ? $(sel) : sel;
+  if (!el) return;
+  if (hide) el.setAttribute("hidden", ""); else el.removeAttribute("hidden");
+}
 function renderAll() {
   // SEO
-  document.title = state.site.title || "Workin'Store";
-  $("#siteTitle").textContent = state.site.title;
+  const title = state.site.title || "";
+  document.title = title || "Site";
+  $("#siteTitle").textContent = title;
   $("#metaDescription").setAttribute("content", state.site.description || "");
   $("#metaKeywords").setAttribute("content", state.site.keywords || "");
-  $("#ogTitle").setAttribute("content", state.site.title || "");
+  $("#ogTitle").setAttribute("content", title);
   $("#ogDescription").setAttribute("content", state.site.description || "");
   if (state.site.favicon) $("#favicon").setAttribute("href", state.site.favicon);
   // Cores
@@ -182,30 +189,54 @@ function renderAll() {
   const lsq = $("#logoSquare"), lho = $("#logoHorizontal");
   if (state.site.logoSquare) { lsq.src = state.site.logoSquare; } else { lsq.removeAttribute("src"); }
   if (state.site.logoHorizontal) { lho.src = state.site.logoHorizontal; } else { lho.removeAttribute("src"); }
-  // Hero
-  $("#heroEyebrow").textContent = state.site.heroEyebrow || "Bem-vindo";
-  $("#heroTitle").textContent = state.site.heroTitle || "Workin'Store";
-  $("#heroSubtitle").textContent = state.site.heroSubtitle || "";
+  // Nome da marca (só aparece se houver título e sem logo horizontal)
+  document.documentElement.style.setProperty("--brand-name", title ? `"${title.replace(/"/g, '\\"')}"` : '""');
+  // Hero — só mostra se houver ao menos título ou subtítulo
+  const heroTitle = state.site.heroTitle || "";
+  const heroSubtitle = state.site.heroSubtitle || "";
+  const heroEyebrow = state.site.heroEyebrow || "";
+  $("#heroEyebrow").textContent = heroEyebrow;
+  $("#heroTitle").textContent = heroTitle;
+  $("#heroSubtitle").textContent = heroSubtitle;
+  setHidden("#heroEyebrow", !heroEyebrow);
+  setHidden("#heroTitle", !heroTitle);
+  setHidden("#heroSubtitle", !heroSubtitle);
+  const heroCopyVisible = !!(heroTitle || heroSubtitle || heroEyebrow);
+  const heroCopyEl = document.querySelector("#home .hero-copy");
+  if (heroCopyEl) heroCopyEl.style.display = heroCopyVisible ? "" : "none";
+  const bannersCount = Object.keys(state.banners).length;
+  setHidden("#home", !heroCopyVisible && bannersCount === 0);
+  // Sobre / Suporte
   $("#aboutText").textContent = state.site.aboutText || "";
   $("#supportText").textContent = state.site.supportText || "";
+  setHidden("#sobre", !(state.site.aboutText || "").trim());
+  setHidden("#suporte", !(state.site.supportText || "").trim());
   renderServices();
   renderDownloads();
 }
 function renderServices() {
-  $("#servicesGrid").innerHTML = state.services.map(s =>
+  const hasItems = state.services && state.services.length > 0;
+  setHidden("#servicos", !hasItems);
+  $("#servicesGrid").innerHTML = (state.services || []).map(s =>
     `<div class="mini-card"><h4>${escapeHtml(s.title)}</h4><p>${escapeHtml(s.desc)}</p></div>`).join("");
 }
 function renderDownloads() {
-  $("#downloadsGrid").innerHTML = state.downloads.map(s =>
+  const hasItems = state.downloads && state.downloads.length > 0;
+  setHidden("#downloads", !hasItems);
+  $("#downloadsGrid").innerHTML = (state.downloads || []).map(s =>
     `<div class="mini-card"><h4>${escapeHtml(s.title)}</h4><p>${escapeHtml(s.desc)}</p></div>`).join("");
 }
 function renderSlider() {
   const container = $("#slides"), dots = $("#dots");
   const items = Object.entries(state.banners);
+  const sliderEl = document.querySelector("#home .hero-slider");
   if (items.length === 0) {
-    container.innerHTML = `<div class="slide"><div class="slide-empty">Nenhum banner cadastrado</div></div>`;
-    dots.innerHTML = ""; return;
+    container.innerHTML = "";
+    dots.innerHTML = "";
+    if (sliderEl) sliderEl.style.display = "none";
+    return;
   }
+  if (sliderEl) sliderEl.style.display = "";
   container.innerHTML = items.map(([id, b]) =>
     `<div class="slide"><img loading="lazy" src="${b.image}" alt="${escapeHtml(b.caption || "")}" />${b.caption ? `<div class="cap">${escapeHtml(b.caption)}</div>` : ""}</div>`).join("");
   dots.innerHTML = items.map((_, i) =>
@@ -228,6 +259,7 @@ function restartSlideTimer() {
 }
 function renderCategoryChips() {
   const cats = Object.entries(state.categories);
+  setHidden("#categorias", cats.length === 0);
   $("#categoryChips").innerHTML =
     `<button class="chip ${state.currentCategory === null ? "active" : ""}" data-cat="">Todas</button>` +
     cats.map(([id, c]) => `<button class="chip ${state.currentCategory === id ? "active" : ""}" data-cat="${id}">${escapeHtml(c.name)}</button>`).join("");
@@ -244,6 +276,9 @@ function renderProducts() {
       return [p.name, p.description, cat, sub].some(v => (v || "").toLowerCase().includes(search));
     });
   }
+  // Esconde a seção Loja quando não há nenhum produto cadastrado (não filtrado)
+  const totalProducts = Object.keys(state.products).length;
+  setHidden("#loja", totalProducts === 0);
   $("#emptyState").hidden = list.length > 0;
   $("#productCount").textContent = `${list.length} produto(s)`;
   grid.innerHTML = list.map(([id, p]) => {
@@ -273,36 +308,47 @@ function renderProducts() {
 }
 function renderMenu() {
   const list = $("#menuList");
-  const defaults = [
-    { label: "Home", href: "#home" },
-    { label: "Loja", href: "#loja" },
-    { label: "Serviços", href: "#servicos" },
-    { label: "Downloads", href: "#downloads" },
-    { label: "Contato", href: "#contato" },
-    { label: "Sobre", href: "#sobre" },
-    { label: "Suporte", href: "#suporte" },
-  ];
-  const items = Object.keys(state.menu).length ? Object.entries(state.menu).map(([id, m]) => ({ id, ...m })) : defaults;
-  // Mega menu de Loja: subcategorias/categorias
+  // Apenas itens cadastrados pelo admin; sem defaults.
+  const items = Object.entries(state.menu).map(([id, m]) => ({ id, ...m }));
   const cats = Object.entries(state.categories);
   list.innerHTML = items.map(m => {
-    const isStore = /loja/i.test(m.label);
+    const isStore = /loja/i.test(m.label || "");
     let mega = "";
     if (isStore && cats.length) {
       mega = `<div class="mega">${cats.map(([id, c]) => `<a href="#loja" data-cat="${id}">${escapeHtml(c.name)}</a>`).join("")}</div>`;
     }
     return `<li><a class="m-link" href="${m.href || "#"}">${escapeHtml(m.label)}</a>${mega}</li>`;
   }).join("");
+  // Esconde o <nav> quando não há itens
+  const nav = $("#mainNav");
+  if (nav) nav.style.display = items.length ? "" : "none";
 }
 function renderFooter() {
-  $("#footerCompany").textContent = state.footer.company || "Workin'Store";
-  $("#footerAbout").textContent = state.footer.about || "";
-  $("#footerInfo").textContent = state.footer.info || "";
-  $("#footerCopy").textContent = state.footer.copy || "";
+  const f = state.footer || {};
+  $("#footerCompany").textContent = f.company || "";
+  $("#footerAbout").textContent = f.about || "";
+  $("#footerInfo").textContent = f.info || "";
+  $("#footerCopy").textContent = f.copy || "";
   const parseLines = s => (s || "").split("\n").map(l => l.split("|").map(x => x.trim())).filter(a => a[0]);
-  $("#footerLinks").innerHTML = parseLines(state.footer.links).map(([l, h]) => `<li><a href="${h || "#"}">${escapeHtml(l)}</a></li>`).join("");
-  $("#footerSocials").innerHTML = parseLines(state.footer.socials).map(([l, h]) => `<li><a href="${h || "#"}" target="_blank" rel="noopener">${escapeHtml(l)}</a></li>`).join("");
-  $("#contactList").innerHTML = parseLines(state.footer.contacts).map(([l, v]) => `<li><b>${escapeHtml(l)}:</b>${escapeHtml(v || "")}</li>`).join("");
+  const links = parseLines(f.links);
+  const socials = parseLines(f.socials);
+  const contacts = parseLines(f.contacts);
+  $("#footerLinks").innerHTML = links.map(([l, h]) => `<li><a href="${h || "#"}">${escapeHtml(l)}</a></li>`).join("");
+  $("#footerSocials").innerHTML = socials.map(([l, h]) => `<li><a href="${h || "#"}" target="_blank" rel="noopener">${escapeHtml(l)}</a></li>`).join("");
+  $("#contactList").innerHTML = contacts.map(([l, v]) => `<li><b>${escapeHtml(l)}:</b>${escapeHtml(v || "")}</li>`).join("");
+  // Esconde blocos do footer sem conteúdo
+  const cards = document.querySelectorAll(".footer-grid > div");
+  if (cards[0]) cards[0].style.display = (f.company || f.about) ? "" : "none";
+  if (cards[1]) cards[1].style.display = links.length ? "" : "none";
+  if (cards[2]) cards[2].style.display = socials.length ? "" : "none";
+  if (cards[3]) cards[3].style.display = f.info ? "" : "none";
+  // Esconde a seção Contato quando não houver contatos
+  setHidden("#contato", contacts.length === 0);
+  // Esconde footer inteiro se completamente vazio
+  const anyFooter = f.company || f.about || f.info || f.copy || links.length || socials.length;
+  const footerEl = document.querySelector(".footer");
+  if (footerEl) footerEl.style.display = anyFooter ? "" : "none";
+}
 }
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
