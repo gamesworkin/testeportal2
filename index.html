@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" id="metaDescription" content="Workin'Store — Tecnologia, acessórios e serviços." />
+  <meta name="keywords" id="metaKeywords" content="workin store, loja, tecnologia, playstation 2, acessórios" />
+  <meta property="og:title" id="ogTitle" content="Workin'Store" />
+  <meta property="og:description" id="ogDescription" content="Portal Workin'Store" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" id="favicon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%92%3C/text%3E%3C/svg%3E" />
+  <title id="siteTitle">Workin'Store</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Firebase compat (funciona no GitHub Pages sem build) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <!-- Fundo RGB animado + overlay escuro -->
+  <div class="bg-rgb" aria-hidden="true"></div>
+  <div class="bg-overlay" aria-hidden="true"></div>
+  <!-- ============ HEADER ============ -->
+  <header id="header" class="header" role="banner">
+    <div class="header-inner">
+      <a href="#home" class="brand" aria-label="Workin'Store">
+        <img id="logoSquare" class="logo-square" alt="Logo" />
+        <img id="logoHorizontal" class="logo-horizontal" alt="Workin'Store" />
+      </a>
+      <nav class="nav" id="mainNav" aria-label="Menu principal">
+        <ul id="menuList" class="menu-list"></ul>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" id="searchToggle" aria-label="Pesquisar">🔍</button>
+        <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
+      </div>
+    </div>
+    <div class="search-bar" id="searchBar" hidden>
+      <input type="search" id="searchInput" placeholder="Pesquisar produtos, categorias..." aria-label="Pesquisar" />
+    </div>
+  </header>
+  <main id="main">
+    <!-- ============ BANNER ============ -->
+    <section id="home" class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy glass">
+          <span class="eyebrow" id="heroEyebrow">Bem-vindo</span>
+          <h1 id="heroTitle">Workin'Store</h1>
+          <p id="heroSubtitle">Tecnologia, acessórios e serviços com a confiança que você merece.</p>
+          <div class="hero-cta">
+            <a href="#loja" class="btn btn-primary">Ver a Loja</a>
+            <a href="#servicos" class="btn btn-ghost">Serviços</a>
+          </div>
+        </div>
+        <div class="hero-slider glass" aria-roledescription="carrossel">
+          <div class="slides" id="slides"></div>
+          <button class="slider-arrow prev" id="prevSlide" aria-label="Anterior">‹</button>
+          <button class="slider-arrow next" id="nextSlide" aria-label="Próxima">›</button>
+          <div class="dots" id="dots" role="tablist"></div>
+        </div>
+      </div>
+    </section>
+    <!-- ============ CATEGORIAS ============ -->
+    <section class="section" id="categorias">
+      <div class="section-head">
+        <h2>Categorias</h2>
+        <p class="muted">Explore por categoria</p>
+      </div>
+      <div class="chips" id="categoryChips"></div>
+    </section>
+    <!-- ============ PRODUTOS ============ -->
+    <section class="section" id="loja">
+      <div class="section-head">
+        <h2>Loja</h2>
+        <p class="muted" id="productCount">Nossos produtos</p>
+      </div>
+      <div class="products" id="productsGrid"></div>
+      <p class="empty" id="emptyState" hidden>Nenhum produto encontrado.</p>
+    </section>
+    <!-- ============ SERVIÇOS / DOWNLOADS / SOBRE / CONTATO / SUPORTE ============ -->
+    <section class="section" id="servicos">
+      <div class="section-head"><h2>Serviços</h2></div>
+      <div class="cards-3" id="servicesGrid"></div>
+    </section>
+    <section class="section" id="downloads">
+      <div class="section-head"><h2>Downloads</h2></div>
+      <div class="cards-3" id="downloadsGrid"></div>
+    </section>
+    <section class="section" id="sobre">
+      <div class="glass panel">
+        <h2>Sobre</h2>
+        <p id="aboutText">A Workin'Store é referência em tecnologia e atendimento.</p>
+      </div>
+    </section>
+    <section class="section" id="contato">
+      <div class="glass panel">
+        <h2>Contato</h2>
+        <ul class="contact-list" id="contactList"></ul>
+      </div>
+    </section>
+    <section class="section" id="suporte">
+      <div class="glass panel">
+        <h2>Suporte</h2>
+        <p id="supportText">Precisa de ajuda? Fale conosco pelos canais oficiais.</p>
+      </div>
+    </section>
+  </main>
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div>
+        <h4 id="footerCompany">Workin'Store</h4>
+        <p id="footerAbout" class="muted">Tecnologia com propósito.</p>
+      </div>
+      <div>
+        <h4>Links</h4>
+        <ul id="footerLinks" class="footer-links"></ul>
+      </div>
+      <div>
+        <h4>Redes</h4>
+        <ul id="footerSocials" class="footer-links"></ul>
+      </div>
+      <div>
+        <h4>Empresa</h4>
+        <p id="footerInfo" class="muted"></p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span id="footerCopy">© Workin'Store</span>
+      <button id="openLogin" class="linkish" aria-label="Área Restrita">Área Restrita</button>
+    </div>
+  </footer>
+  <!-- ============ MODAL LOGIN ============ -->
+  <div class="modal" id="loginModal" hidden aria-hidden="true">
+    <div class="modal-backdrop" data-close></div>
+    <div class="modal-card glass" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <h3 id="loginTitle">Área Restrita</h3>
+      <form id="loginForm" autocomplete="off">
+        <label>Email
+          <input type="email" id="loginEmail" placeholder="Seu email" required />
+        </label>
+        <label>Senha
+          <input type="password" id="loginPassword" placeholder="Sua senha" required />
+        </label>
+        <p class="error" id="loginError" hidden></p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="loginSubmit">Entrar</button>
+        </div>
+        <button type="button" class="linkish center" id="forgotBtn">Esqueci minha senha</button>
+      </form>
+    </div>
+  </div>
+  <!-- ============ ADMIN PANEL ============ -->
+  <div class="admin" id="adminPanel" hidden>
+    <header class="admin-header glass">
+      <div class="admin-brand">⚙️ Painel Administrativo</div>
+      <div class="admin-tabs" id="adminTabs">
+        <button data-tab="site" class="active">Site</button>
+        <button data-tab="banners">Banners</button>
+        <button data-tab="categories">Categorias</button>
+        <button data-tab="products">Produtos</button>
+        <button data-tab="menu">Menu</button>
+        <button data-tab="footer">Rodapé</button>
+        <button data-tab="firebase">Firebase</button>
+      </div>
+      <div class="admin-user">
+        <span id="adminEmail" class="muted"></span>
+        <button class="btn btn-ghost" id="logoutBtn">Sair</button>
+      </div>
+    </header>
+    <div class="admin-body">
+      <!-- SITE -->
+      <section class="admin-tab active" data-tab="site">
+        <h3>Identidade & SEO</h3>
+        <div class="admin-grid">
+          <label>Título do site<input id="adm_title" /></label>
+          <label>Descrição<input id="adm_description" /></label>
+          <label>Keywords<input id="adm_keywords" /></label>
+          <label>Cor primária<input type="color" id="adm_colorPrimary" /></label>
+          <label>Cor secundária<input type="color" id="adm_colorSecondary" /></label>
+          <label>Favicon<input type="file" data-target="adm_favicon" accept="image/*" /><small id="adm_favicon_state" class="muted">sem imagem</small></label>
+          <label>Logo quadrada<input type="file" data-target="adm_logoSquare" accept="image/*" /><small id="adm_logoSquare_state" class="muted">sem imagem</small></label>
+          <label>Logo horizontal<input type="file" data-target="adm_logoHorizontal" accept="image/*" /><small id="adm_logoHorizontal_state" class="muted">sem imagem</small></label>
+          <label>Título do banner<input id="adm_heroTitle" /></label>
+          <label>Subtítulo do banner<input id="adm_heroSubtitle" /></label>
+          <label>Eyebrow<input id="adm_heroEyebrow" /></label>
+          <label>Texto sobre<textarea id="adm_aboutText"></textarea></label>
+          <label>Texto suporte<textarea id="adm_supportText"></textarea></label>
+        </div>
+        <button class="btn btn-primary" id="saveSite">Salvar</button>
+      </section>
+      <!-- BANNERS -->
+      <section class="admin-tab" data-tab="banners">
+        <h3>Banners (slider 16:9)</h3>
+        <div class="admin-add">
+          <input type="file" id="bannerFile" accept="image/*" />
+          <input type="text" id="bannerCaption" placeholder="Legenda (opcional)" />
+          <button class="btn btn-primary" id="addBanner">Adicionar</button>
+        </div>
+        <div class="admin-list" id="bannerList"></div>
+      </section>
+      <!-- CATEGORIES -->
+      <section class="admin-tab" data-tab="categories">
+        <h3>Categorias & Subcategorias</h3>
+        <div class="admin-add">
+          <input id="newCategory" placeholder="Nova categoria" />
+          <button class="btn btn-primary" id="addCategory">Adicionar</button>
+        </div>
+        <div class="admin-list" id="categoryList"></div>
+      </section>
+      <!-- PRODUCTS -->
+      <section class="admin-tab" data-tab="products">
+        <h3>Produtos</h3>
+        <div class="admin-grid">
+          <label>Nome<input id="p_name" /></label>
+          <label>Descrição<textarea id="p_description"></textarea></label>
+          <label>Categoria<select id="p_category"></select></label>
+          <label>Subcategoria<select id="p_subcategory"></select></label>
+          <label>Disponibilidade
+            <select id="p_availability">
+              <option value="nacional">Nacional</option>
+              <option value="local">Local</option>
+            </select>
+          </label>
+          <label>Cidades (se local, separadas por vírgula)<input id="p_cities" placeholder="Juazeiro do Norte, Crato, Barbalha" /></label>
+          <label>Garantia
+            <select id="p_warranty">
+              <option value="workin">Workin'Store (7 dias)</option>
+              <option value="fabricante">Garantia do Fabricante</option>
+            </select>
+          </label>
+          <label>URL de compra<input id="p_buyUrl" placeholder="https://..." /></label>
+          <label>Imagem<input type="file" id="p_image" accept="image/*" /></label>
+        </div>
+        <div class="row-actions">
+          <button class="btn btn-primary" id="saveProduct">Salvar produto</button>
+          <button class="btn btn-ghost" id="clearProduct">Limpar</button>
+        </div>
+        <div class="admin-list" id="productList"></div>
+      </section>
+      <!-- MENU -->
+      <section class="admin-tab" data-tab="menu">
+        <h3>Menu & Mega Menus</h3>
+        <div class="admin-add">
+          <input id="menuLabel" placeholder="Rótulo (ex: Loja)" />
+          <input id="menuHref" placeholder="#loja ou https://..." />
+          <button class="btn btn-primary" id="addMenu">Adicionar</button>
+        </div>
+        <div class="admin-list" id="menuAdminList"></div>
+      </section>
+      <!-- FOOTER -->
+      <section class="admin-tab" data-tab="footer">
+        <h3>Rodapé, Contatos & Empresa</h3>
+        <div class="admin-grid">
+          <label>Nome empresa<input id="adm_footerCompany" /></label>
+          <label>Sobre<textarea id="adm_footerAbout"></textarea></label>
+          <label>Informações<textarea id="adm_footerInfo"></textarea></label>
+          <label>Copyright<input id="adm_footerCopy" /></label>
+          <label>Links úteis (label|href por linha)<textarea id="adm_footerLinks"></textarea></label>
+          <label>Redes sociais (label|href por linha)<textarea id="adm_footerSocials"></textarea></label>
+          <label>Contatos (label|valor por linha)<textarea id="adm_contactList"></textarea></label>
+        </div>
+        <button class="btn btn-primary" id="saveFooter">Salvar</button>
+      </section>
+      <!-- FIREBASE (info) -->
+      <section class="admin-tab" data-tab="firebase">
+        <h3>Firebase</h3>
+        <p class="muted">Edite as chaves no topo de <code>script.js</code> na seção <b>CONFIGURAÇÃO DO FIREBASE</b>.</p>
+        <pre id="fbStatus" class="code"></pre>
+      </section>
+    </div>
+  </div>
+  <!-- Toast -->
+  <div id="toast" class="toast" hidden></div>
+  <script src="script.js"></script>
+</body>
+</html>
