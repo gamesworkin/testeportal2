@@ -143,6 +143,9 @@ function initFirebase() {
     state.auth.onAuthStateChanged(u => {
       if (u && u.email === ADMIN_EMAIL) {
         $("#adminEmail").textContent = u.email;
+      } else {
+        $("#adminPanel").hidden = true;
+        $("#adminEmail").textContent = "";
       }
     });
     return true;
@@ -308,6 +311,9 @@ function escapeHtml(s) {
    INTERAÇÕES / EVENTOS PÚBLICOS
    ================================================================= */
 function bindPublicEvents() {
+  // Garante que o modal de login inicie fechado
+  $("#loginModal").hidden = true;
+  $("#loginModal").setAttribute("aria-hidden", "true");
   // Header scroll
   window.addEventListener("scroll", () => {
     $("#header").classList.toggle("scrolled", window.scrollY > 20);
@@ -347,7 +353,14 @@ function bindPublicEvents() {
   document.addEventListener("keydown", e => { if (e.key === "Escape") closeLogin(); });
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#forgotBtn").addEventListener("click", handleForgot);
-  $("#logoutBtn").addEventListener("click", () => state.auth && state.auth.signOut());
+  $("#logoutBtn").addEventListener("click", async () => {
+    try {
+      if (state.auth) await state.auth.signOut();
+    } catch (err) { console.error(err); }
+    $("#adminPanel").hidden = true;
+    $("#adminEmail").textContent = "";
+    toast("Sessão encerrada.", "success");
+  });
 }
 function openLogin() {
   $("#loginModal").hidden = false;
