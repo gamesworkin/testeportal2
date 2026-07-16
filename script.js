@@ -66,7 +66,7 @@ const state = {
   },
   services: [
     { title: "Assistência Técnica", desc: "Reparos em OPL ou Funtuna com garantia e agilidade." },
-    { title: "Instalação", desc: "Só plugar e jogar, tudo garantido" },
+    { title: "Instalação", desc: "Só plugar e jogar, tudo garantido." },
     { title: "Consultoria", desc: "Escolha o produto certo para você." },
   ],
   downloads: [
