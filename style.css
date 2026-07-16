@@ -77,7 +77,7 @@ button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
 .logo-horizontal{height:32px;object-fit:contain}
 .logo-square:not([src]),.logo-horizontal:not([src]){display:none}
 .brand::after{
-  content: var(--brand-name, "");
+  content:"Workin'Store";
   font-weight:700;letter-spacing:.5px;font-size:18px;
   background:linear-gradient(90deg,var(--secondary),var(--primary));
   -webkit-background-clip:text;background-clip:text;color:transparent;
@@ -259,8 +259,9 @@ main{padding-top:calc(var(--header-h) + 20px)}
 /* ============ MODAL ============ */
 .modal{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
 .modal[hidden]{display:none !important}
-.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);animation:fadeIn .3s ease}
-.modal-card{position:relative;width:100%;max-width:420px;padding:32px;animation:popIn .35s cubic-bezier(.3,1.4,.5,1);background:rgba(15,18,32,.92);border:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.admin[hidden]{display:none !important}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);animation:fadeIn .3s ease}
+.modal-card{position:relative;width:100%;max-width:420px;padding:32px;animation:popIn .35s cubic-bezier(.3,1.4,.5,1);background:rgba(15,18,32,.92);border:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:var(--radius);box-shadow:var(--shadow-lg)}
 .modal-card h3{margin:0 0 20px;font-size:22px}
 .modal-card label{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;font-size:13px;color:var(--muted)}
 .modal-card input,.admin input:not([type=file]):not([type=color]),.admin select,.admin textarea{
@@ -281,7 +282,6 @@ main{padding-top:calc(var(--header-h) + 20px)}
 .admin-header{
   position:sticky;top:0;z-index:2;margin:16px;padding:14px 20px;
   display:flex;gap:16px;align-items:center;flex-wrap:wrap;border-radius:16px;
-  background:rgba(15,18,32,.92);border:1px solid var(--glass-border);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
 }
 .admin-brand{font-weight:700;font-size:16px}
 .admin-tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1;justify-content:center}

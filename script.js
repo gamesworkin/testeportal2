@@ -37,35 +37,43 @@ const ADMIN_EMAIL = "admin@admin.com";
    ================================================================= */
 const state = {
   site: {
-    title: "",
-    description: "",
-    keywords: "",
+    title: "Workin'Store",
+    description: "Tecnologia, acessórios e serviços com a confiança que você merece.",
+    keywords: "workin store, loja, tecnologia, playstation 2, acessórios",
     colorPrimary: "#6c5ce7",
     colorSecondary: "#00d4ff",
     favicon: "",
     logoSquare: "",
     logoHorizontal: "",
-    heroEyebrow: "",
-    heroTitle: "",
-    heroSubtitle: "",
-    aboutText: "",
-    supportText: "",
+    heroEyebrow: "Bem-vindo",
+    heroTitle: "Workin'Store",
+    heroSubtitle: "Tecnologia, acessórios e serviços com a confiança que você merece.",
+    aboutText: "A Workin'Store é referência em tecnologia e atendimento personalizado.",
+    supportText: "Precisa de ajuda? Fale conosco pelos canais oficiais.",
   },
   banners: {},
   categories: {},
   products: {},
   menu: {},
   footer: {
-    company: "",
-    about: "",
+    company: "Workin'Store",
+    about: "Tecnologia com propósito.",
     info: "",
-    copy: "",
-    links: "",
-    socials: "",
-    contacts: "",
+    copy: "© " + new Date().getFullYear() + " Workin'Store",
+    links: "",      // "Home|#home\nLoja|#loja"
+    socials: "",    // "Instagram|https://..."
+    contacts: "",   // "WhatsApp|(88) 99999-9999"
   },
-  services: [],
-  downloads: [],
+  services: [
+    { title: "Assistência Técnica", desc: "Reparos com garantia e agilidade." },
+    { title: "Instalação", desc: "Setup completo e profissional." },
+    { title: "Consultoria", desc: "Escolha o produto certo para você." },
+  ],
+  downloads: [
+    { title: "Manuais", desc: "Guias e documentação técnica." },
+    { title: "Firmwares", desc: "Atualizações oficiais." },
+    { title: "Drivers", desc: "Compatibilidade e desempenho." },
+  ],
   currentCategory: null,
   currentSearch: "",
   editingProductId: null,
@@ -92,13 +100,20 @@ function toast(msg, type = "") {
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve("");
-    // Preserva PNG/WebP/GIF (mantém transparência); usa JPEG só para fotos.
-    const type = (file.type || "").toLowerCase();
-    const keepAlpha = /png|webp|gif|svg/.test(type);
+    // Compressão leve para reduzir tamanho no RTDB.
+    // Preserva PNG/WebP/SVG (transparência) — só converte para JPEG quando origem é JPEG.
     const reader = new FileReader();
+    const type = (file.type || "").toLowerCase();
+    // SVG: mantém como está (vetor, sem canvas)
+    if (type === "image/svg+xml") {
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+      return;
+    }
+    const keepAlpha = type === "image/png" || type === "image/webp" || type === "image/gif";
+    const outType = keepAlpha ? "image/png" : "image/jpeg";
     reader.onload = () => {
-      // SVG: guarda como data URL original (sem rasterizar)
-      if (type.includes("svg")) { resolve(reader.result); return; }
       const img = new Image();
       img.onload = () => {
         const max = 1200;
@@ -110,12 +125,10 @@ function fileToBase64(file) {
         const canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext("2d");
-        // Não preencher fundo: mantém transparência para PNG/WebP/GIF
-        ctx.clearRect(0, 0, w, h);
+        // Sem fill de fundo — canvas começa transparente. Para JPEG (sem alfa) pintamos branco em vez de preto.
+        if (!keepAlpha) { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); }
         ctx.drawImage(img, 0, 0, w, h);
-        const outType = keepAlpha ? "image/png" : "image/jpeg";
-        const quality = keepAlpha ? undefined : 0.85;
-        resolve(canvas.toDataURL(outType, quality));
+        resolve(keepAlpha ? canvas.toDataURL("image/png") : canvas.toDataURL("image/jpeg", 0.9));
       };
       img.onerror = reject;
       img.src = reader.result;
@@ -145,8 +158,9 @@ function initFirebase() {
       if (u && u.email === ADMIN_EMAIL) {
         $("#adminEmail").textContent = u.email;
       } else {
-        $("#adminPanel").hidden = true;
+        // logout / não-admin: esconde painel e limpa email
         $("#adminEmail").textContent = "";
+        $("#adminPanel").hidden = true;
       }
     });
     return true;
@@ -167,19 +181,13 @@ function subscribeAll() {
 /* =================================================================
    RENDER
    ================================================================= */
-function setHidden(sel, hide) {
-  const el = typeof sel === "string" ? $(sel) : sel;
-  if (!el) return;
-  if (hide) el.setAttribute("hidden", ""); else el.removeAttribute("hidden");
-}
 function renderAll() {
   // SEO
-  const title = state.site.title || "";
-  document.title = title || "Site";
-  $("#siteTitle").textContent = title;
+  document.title = state.site.title || "Workin'Store";
+  $("#siteTitle").textContent = state.site.title;
   $("#metaDescription").setAttribute("content", state.site.description || "");
   $("#metaKeywords").setAttribute("content", state.site.keywords || "");
-  $("#ogTitle").setAttribute("content", title);
+  $("#ogTitle").setAttribute("content", state.site.title || "");
   $("#ogDescription").setAttribute("content", state.site.description || "");
   if (state.site.favicon) $("#favicon").setAttribute("href", state.site.favicon);
   // Cores
@@ -189,54 +197,39 @@ function renderAll() {
   const lsq = $("#logoSquare"), lho = $("#logoHorizontal");
   if (state.site.logoSquare) { lsq.src = state.site.logoSquare; } else { lsq.removeAttribute("src"); }
   if (state.site.logoHorizontal) { lho.src = state.site.logoHorizontal; } else { lho.removeAttribute("src"); }
-  // Nome da marca (só aparece se houver título e sem logo horizontal)
-  document.documentElement.style.setProperty("--brand-name", title ? `"${title.replace(/"/g, '\\"')}"` : '""');
-  // Hero — só mostra se houver ao menos título ou subtítulo
-  const heroTitle = state.site.heroTitle || "";
-  const heroSubtitle = state.site.heroSubtitle || "";
-  const heroEyebrow = state.site.heroEyebrow || "";
-  $("#heroEyebrow").textContent = heroEyebrow;
-  $("#heroTitle").textContent = heroTitle;
-  $("#heroSubtitle").textContent = heroSubtitle;
-  setHidden("#heroEyebrow", !heroEyebrow);
-  setHidden("#heroTitle", !heroTitle);
-  setHidden("#heroSubtitle", !heroSubtitle);
-  const heroCopyVisible = !!(heroTitle || heroSubtitle || heroEyebrow);
-  const heroCopyEl = document.querySelector("#home .hero-copy");
-  if (heroCopyEl) heroCopyEl.style.display = heroCopyVisible ? "" : "none";
-  const bannersCount = Object.keys(state.banners).length;
-  setHidden("#home", !heroCopyVisible && bannersCount === 0);
-  // Sobre / Suporte
+  // Hero
+  $("#heroEyebrow").textContent = state.site.heroEyebrow || "Bem-vindo";
+  $("#heroTitle").textContent = state.site.heroTitle || "Workin'Store";
+  $("#heroSubtitle").textContent = state.site.heroSubtitle || "";
   $("#aboutText").textContent = state.site.aboutText || "";
   $("#supportText").textContent = state.site.supportText || "";
-  setHidden("#sobre", !(state.site.aboutText || "").trim());
-  setHidden("#suporte", !(state.site.supportText || "").trim());
   renderServices();
   renderDownloads();
+  applyEmptySectionVisibility();
 }
 function renderServices() {
-  const hasItems = state.services && state.services.length > 0;
-  setHidden("#servicos", !hasItems);
-  $("#servicesGrid").innerHTML = (state.services || []).map(s =>
+  $("#servicesGrid").innerHTML = state.services.map(s =>
     `<div class="mini-card"><h4>${escapeHtml(s.title)}</h4><p>${escapeHtml(s.desc)}</p></div>`).join("");
 }
 function renderDownloads() {
-  const hasItems = state.downloads && state.downloads.length > 0;
-  setHidden("#downloads", !hasItems);
-  $("#downloadsGrid").innerHTML = (state.downloads || []).map(s =>
+  $("#downloadsGrid").innerHTML = state.downloads.map(s =>
     `<div class="mini-card"><h4>${escapeHtml(s.title)}</h4><p>${escapeHtml(s.desc)}</p></div>`).join("");
 }
 function renderSlider() {
   const container = $("#slides"), dots = $("#dots");
   const items = Object.entries(state.banners);
-  const sliderEl = document.querySelector("#home .hero-slider");
+  const sliderEl = document.querySelector(".hero-slider");
   if (items.length === 0) {
     container.innerHTML = "";
     dots.innerHTML = "";
-    if (sliderEl) sliderEl.style.display = "none";
+    if (sliderEl) sliderEl.hidden = true;
+    const grid = document.querySelector(".hero-grid");
+    if (grid) grid.style.gridTemplateColumns = "1fr";
     return;
   }
-  if (sliderEl) sliderEl.style.display = "";
+  if (sliderEl) sliderEl.hidden = false;
+  const grid = document.querySelector(".hero-grid");
+  if (grid) grid.style.gridTemplateColumns = "";
   container.innerHTML = items.map(([id, b]) =>
     `<div class="slide"><img loading="lazy" src="${b.image}" alt="${escapeHtml(b.caption || "")}" />${b.caption ? `<div class="cap">${escapeHtml(b.caption)}</div>` : ""}</div>`).join("");
   dots.innerHTML = items.map((_, i) =>
@@ -259,10 +252,10 @@ function restartSlideTimer() {
 }
 function renderCategoryChips() {
   const cats = Object.entries(state.categories);
-  setHidden("#categorias", cats.length === 0);
   $("#categoryChips").innerHTML =
     `<button class="chip ${state.currentCategory === null ? "active" : ""}" data-cat="">Todas</button>` +
     cats.map(([id, c]) => `<button class="chip ${state.currentCategory === id ? "active" : ""}" data-cat="${id}">${escapeHtml(c.name)}</button>`).join("");
+  applyEmptySectionVisibility();
 }
 function renderProducts() {
   const grid = $("#productsGrid");
@@ -276,9 +269,6 @@ function renderProducts() {
       return [p.name, p.description, cat, sub].some(v => (v || "").toLowerCase().includes(search));
     });
   }
-  // Esconde a seção Loja quando não há nenhum produto cadastrado (não filtrado)
-  const totalProducts = Object.keys(state.products).length;
-  setHidden("#loja", totalProducts === 0);
   $("#emptyState").hidden = list.length > 0;
   $("#productCount").textContent = `${list.length} produto(s)`;
   grid.innerHTML = list.map(([id, p]) => {
@@ -305,60 +295,64 @@ function renderProducts() {
         </div>
       </article>`;
   }).join("");
+  applyEmptySectionVisibility();
 }
 function renderMenu() {
   const list = $("#menuList");
-  // Apenas itens cadastrados pelo admin; sem defaults.
-  const items = Object.entries(state.menu).map(([id, m]) => ({ id, ...m }));
+  const defaults = [
+    { label: "Home", href: "#home" },
+    { label: "Loja", href: "#loja" },
+    { label: "Serviços", href: "#servicos" },
+    { label: "Downloads", href: "#downloads" },
+    { label: "Contato", href: "#contato" },
+    { label: "Sobre", href: "#sobre" },
+    { label: "Suporte", href: "#suporte" },
+  ];
+  const items = Object.keys(state.menu).length ? Object.entries(state.menu).map(([id, m]) => ({ id, ...m })) : defaults;
+  // Mega menu de Loja: subcategorias/categorias
   const cats = Object.entries(state.categories);
   list.innerHTML = items.map(m => {
-    const isStore = /loja/i.test(m.label || "");
+    const isStore = /loja/i.test(m.label);
     let mega = "";
     if (isStore && cats.length) {
       mega = `<div class="mega">${cats.map(([id, c]) => `<a href="#loja" data-cat="${id}">${escapeHtml(c.name)}</a>`).join("")}</div>`;
     }
     return `<li><a class="m-link" href="${m.href || "#"}">${escapeHtml(m.label)}</a>${mega}</li>`;
   }).join("");
-  // Esconde o <nav> quando não há itens
-  const nav = $("#mainNav");
-  if (nav) nav.style.display = items.length ? "" : "none";
 }
 function renderFooter() {
-  const f = state.footer || {};
-  $("#footerCompany").textContent = f.company || "";
-  $("#footerAbout").textContent = f.about || "";
-  $("#footerInfo").textContent = f.info || "";
-  $("#footerCopy").textContent = f.copy || "";
+  $("#footerCompany").textContent = state.footer.company || "Workin'Store";
+  $("#footerAbout").textContent = state.footer.about || "";
+  $("#footerInfo").textContent = state.footer.info || "";
+  $("#footerCopy").textContent = state.footer.copy || "";
   const parseLines = s => (s || "").split("\n").map(l => l.split("|").map(x => x.trim())).filter(a => a[0]);
-  const links = parseLines(f.links);
-  const socials = parseLines(f.socials);
-  const contacts = parseLines(f.contacts);
-  $("#footerLinks").innerHTML = links.map(([l, h]) => `<li><a href="${h || "#"}">${escapeHtml(l)}</a></li>`).join("");
-  $("#footerSocials").innerHTML = socials.map(([l, h]) => `<li><a href="${h || "#"}" target="_blank" rel="noopener">${escapeHtml(l)}</a></li>`).join("");
-  $("#contactList").innerHTML = contacts.map(([l, v]) => `<li><b>${escapeHtml(l)}:</b>${escapeHtml(v || "")}</li>`).join("");
-  // Esconde blocos do footer sem conteúdo
-  const cards = document.querySelectorAll(".footer-grid > div");
-  if (cards[0]) cards[0].style.display = (f.company || f.about) ? "" : "none";
-  if (cards[1]) cards[1].style.display = links.length ? "" : "none";
-  if (cards[2]) cards[2].style.display = socials.length ? "" : "none";
-  if (cards[3]) cards[3].style.display = f.info ? "" : "none";
-  // Esconde a seção Contato quando não houver contatos
-  setHidden("#contato", contacts.length === 0);
-  // Esconde footer inteiro se completamente vazio
-  const anyFooter = f.company || f.about || f.info || f.copy || links.length || socials.length;
-  const footerEl = document.querySelector(".footer");
-  if (footerEl) footerEl.style.display = anyFooter ? "" : "none";
+  $("#footerLinks").innerHTML = parseLines(state.footer.links).map(([l, h]) => `<li><a href="${h || "#"}">${escapeHtml(l)}</a></li>`).join("");
+  $("#footerSocials").innerHTML = parseLines(state.footer.socials).map(([l, h]) => `<li><a href="${h || "#"}" target="_blank" rel="noopener">${escapeHtml(l)}</a></li>`).join("");
+  $("#contactList").innerHTML = parseLines(state.footer.contacts).map(([l, v]) => `<li><b>${escapeHtml(l)}:</b>${escapeHtml(v || "")}</li>`).join("");
+  applyEmptySectionVisibility();
 }
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+/* Esconde seções sem conteúdo cadastrado */
+function applyEmptySectionVisibility() {
+  const hide = (id, empty) => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = !!empty;
+  };
+  hide("categorias", Object.keys(state.categories || {}).length === 0);
+  hide("loja",       Object.keys(state.products   || {}).length === 0);
+  hide("servicos",   !state.services || state.services.length === 0);
+  hide("downloads",  !state.downloads || state.downloads.length === 0);
+  hide("sobre",      !(state.site.aboutText && state.site.aboutText.trim()));
+  hide("suporte",    !(state.site.supportText && state.site.supportText.trim()));
+  const contatos = (state.footer.contacts || "").trim();
+  hide("contato", !contatos);
 }
 /* =================================================================
    INTERAÇÕES / EVENTOS PÚBLICOS
    ================================================================= */
 function bindPublicEvents() {
-  // Garante que o modal de login inicie fechado
-  $("#loginModal").hidden = true;
-  $("#loginModal").setAttribute("aria-hidden", "true");
   // Header scroll
   window.addEventListener("scroll", () => {
     $("#header").classList.toggle("scrolled", window.scrollY > 20);
@@ -398,13 +392,14 @@ function bindPublicEvents() {
   document.addEventListener("keydown", e => { if (e.key === "Escape") closeLogin(); });
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#forgotBtn").addEventListener("click", handleForgot);
+  // Logout: liga aqui (existe no DOM desde o boot, mesmo com painel oculto)
   $("#logoutBtn").addEventListener("click", async () => {
     try {
       if (state.auth) await state.auth.signOut();
-    } catch (err) { console.error(err); }
+    } catch (e) { /* ignore */ }
     $("#adminPanel").hidden = true;
     $("#adminEmail").textContent = "";
-    toast("Sessão encerrada.", "success");
+    toast("Sessão encerrada.");
   });
 }
 function openLogin() {
@@ -464,6 +459,13 @@ function fillAdminForms() {
   $("#adm_favicon_state").textContent = s.favicon ? "imagem carregada" : "sem imagem";
   $("#adm_logoSquare_state").textContent = s.logoSquare ? "imagem carregada" : "sem imagem";
   $("#adm_logoHorizontal_state").textContent = s.logoHorizontal ? "imagem carregada" : "sem imagem";
+  // URLs (usadas quando não há upload; ideal para hospedar imagens no GitHub)
+  const fUrl = document.getElementById("adm_faviconUrl");
+  const lsUrl = document.getElementById("adm_logoSquareUrl");
+  const lhUrl = document.getElementById("adm_logoHorizontalUrl");
+  if (fUrl)  fUrl.value  = s.faviconUrl        || "";
+  if (lsUrl) lsUrl.value = s.logoSquareUrl     || "";
+  if (lhUrl) lhUrl.value = s.logoHorizontalUrl || "";
   const f = state.footer;
   $("#adm_footerCompany").value = f.company || "";
   $("#adm_footerAbout").value = f.about || "";
@@ -525,6 +527,16 @@ async function saveSite() {
   state.site.heroSubtitle = $("#adm_heroSubtitle").value;
   state.site.aboutText = $("#adm_aboutText").value;
   state.site.supportText = $("#adm_supportText").value;
+  // URLs de logos/favicon (prioridade: URL > base64 se ambos existirem)
+  const fUrl  = document.getElementById("adm_faviconUrl");
+  const lsUrl = document.getElementById("adm_logoSquareUrl");
+  const lhUrl = document.getElementById("adm_logoHorizontalUrl");
+  if (fUrl)  state.site.faviconUrl        = fUrl.value.trim();
+  if (lsUrl) state.site.logoSquareUrl     = lsUrl.value.trim();
+  if (lhUrl) state.site.logoHorizontalUrl = lhUrl.value.trim();
+  if (state.site.faviconUrl)        state.site.favicon        = state.site.faviconUrl;
+  if (state.site.logoSquareUrl)     state.site.logoSquare     = state.site.logoSquareUrl;
+  if (state.site.logoHorizontalUrl) state.site.logoHorizontal = state.site.logoHorizontalUrl;
   await persist("site", state.site);
   renderAll();
   toast("Site atualizado.", "success");
