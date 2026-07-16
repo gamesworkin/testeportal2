@@ -65,14 +65,14 @@ const state = {
     contacts: "",   // "WhatsApp|(88) 99999-9999"
   },
   services: [
-    { title: "Assistência Técnica", desc: "Reparos com garantia e agilidade." },
-    { title: "Instalação", desc: "Setup completo e profissional." },
+    { title: "Assistência Técnica", desc: "Reparos em OPL ou Funtuna com garantia e agilidade." },
+    { title: "Instalação", desc: "Só plugar e jogar, tudo garantido" },
     { title: "Consultoria", desc: "Escolha o produto certo para você." },
   ],
   downloads: [
-    { title: "Manuais", desc: "Guias e documentação técnica." },
-    { title: "Firmwares", desc: "Atualizações oficiais." },
-    { title: "Drivers", desc: "Compatibilidade e desempenho." },
+    { title: "Manuais", desc: "Passo a passo de como inicializar seus jogos no PS2." },
+    { title: "Firmwares", desc: "Atualizações oficiais do OPL sempre que você nos pedir." },
+    { title: "Jogos Bônus", desc: "Na compra de um Kit OPL, ganhe acesso exclusivo a jogos bônus em nossas plataformas." },
   ],
   currentCategory: null,
   currentSearch: "",
