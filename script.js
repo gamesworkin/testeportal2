@@ -281,7 +281,7 @@ function renderProducts() {
     const cat = state.categories[p.category]?.name;
     const sub = (state.categories[p.category]?.subs || {})[p.subcategory]?.name;
     return `
-      <article class="product">
+      <article class="product" data-product-id="${id}" role="button" tabindex="0" aria-label="Ver detalhes de ${escapeHtml(p.name)}">
         <div class="thumb${p.image ? "" : " empty"}">${p.image ? `<img loading="lazy" src="${p.image}" alt="${escapeHtml(p.name)}" />` : "🛒"}</div>
         <div class="info">
           <h3 class="name">${escapeHtml(p.name)}</h3>
@@ -296,6 +296,40 @@ function renderProducts() {
       </article>`;
   }).join("");
   applyEmptySectionVisibility();
+}
+/* =================================================================
+   MODAL DE PRODUTO
+   ================================================================= */
+function openProductModal(id) {
+  const p = state.products[id]; if (!p) return;
+  const cat = state.categories[p.category]?.name;
+  const sub = (state.categories[p.category]?.subs || {})[p.subcategory]?.name;
+  const availTag = p.availability === "local"
+    ? `<span class="tag warn">Local${p.cities ? ": " + escapeHtml(p.cities) : ""}</span>`
+    : `<span class="tag ok">Nacional</span>`;
+  const warrTag = p.warranty === "workin"
+    ? `<span class="tag">Workin'Store (7 dias)</span>`
+    : `<span class="tag">Garantia do Fabricante</span>`;
+  $("#pm_thumb").innerHTML = p.image
+    ? `<img src="${p.image}" alt="${escapeHtml(p.name)}" />`
+    : "🛒";
+  $("#pm_name").textContent = p.name || "";
+  $("#pm_desc").textContent = p.description || "";
+  $("#pm_meta").innerHTML =
+    (cat ? `<span class="tag">${escapeHtml(cat)}</span>` : "") +
+    (sub ? `<span class="tag">${escapeHtml(sub)}</span>` : "") +
+    availTag + warrTag;
+  const buy = $("#pm_buy");
+  if (p.buyUrl) { buy.href = p.buyUrl; buy.style.display = ""; }
+  else { buy.removeAttribute("href"); buy.style.display = "none"; }
+  const modal = $("#productModal");
+  modal.hidden = false; modal.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+}
+function closeProductModal() {
+  const modal = $("#productModal");
+  modal.hidden = true; modal.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
 }
 function renderMenu() {
   const list = $("#menuList");
@@ -389,9 +423,27 @@ function bindPublicEvents() {
   // Login modal
   $("#openLogin").addEventListener("click", openLogin);
   $$("[data-close]").forEach(el => el.addEventListener("click", closeLogin));
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeLogin(); });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") { closeLogin(); closeProductModal(); }
+  });
   $("#loginForm").addEventListener("submit", handleLogin);
   $("#forgotBtn").addEventListener("click", handleForgot);
+  // Product modal: clique no card abre; clique no link "Comprar" segue direto
+  $("#productsGrid").addEventListener("click", e => {
+    if (e.target.closest("a.buy")) return; // deixa o link comprar funcionar
+    const card = e.target.closest(".product[data-product-id]");
+    if (!card) return;
+    openProductModal(card.dataset.productId);
+  });
+  $("#productsGrid").addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const card = e.target.closest(".product[data-product-id]");
+    if (!card) return;
+    e.preventDefault();
+    openProductModal(card.dataset.productId);
+  });
+  $$("#productModal [data-close-product]").forEach(el =>
+    el.addEventListener("click", closeProductModal));
   // Logout: liga aqui (existe no DOM desde o boot, mesmo com painel oculto)
   $("#logoutBtn").addEventListener("click", async () => {
     try {

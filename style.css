@@ -343,6 +343,55 @@ main{padding-top:calc(var(--header-h) + 20px)}
   .modal-card{padding:24px}
   .admin-tabs{justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap}
 }
+/* ============ PRODUTOS — MOBILE 3 COLUNAS ============ */
+@media (max-width: 720px){
+  .products{grid-template-columns:repeat(3,1fr);gap:10px}
+  .product .info{padding:10px;gap:4px}
+  .product .name{font-size:12px;line-height:1.2}
+  .product .desc{font-size:11px;-webkit-line-clamp:2}
+  .product .meta{gap:4px;margin-top:2px}
+  .product .meta .tag{font-size:9px;padding:2px 6px}
+  .product .buy{padding:8px;font-size:12px;border-radius:8px}
+}
+/* ============ MODAL DO PRODUTO ============ */
+.product{cursor:pointer}
+.modal-card.product-modal{
+  max-width:720px;max-height:90vh;overflow-y:auto;padding:0;display:flex;flex-direction:column;
+}
+.modal-close{
+  position:absolute;top:12px;right:14px;z-index:3;
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(0,0,0,.5);color:#fff;font-size:22px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,transform .2s;
+}
+.modal-close:hover{background:rgba(0,0,0,.75);transform:rotate(90deg)}
+.pm-body{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.pm-thumb{
+  aspect-ratio:1/1;background:rgba(255,255,255,.04);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border-top-left-radius:var(--radius);border-bottom-left-radius:0;
+  color:var(--muted);font-size:60px;
+}
+.pm-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pm-info{padding:28px;display:flex;flex-direction:column;gap:12px}
+.pm-info h3{margin:0;font-size:24px;line-height:1.2}
+.pm-meta{display:flex;flex-wrap:wrap;gap:6px}
+.pm-desc{margin:0;color:var(--muted);font-size:14px;line-height:1.6;white-space:pre-wrap}
+.pm-footer{
+  padding:18px 24px;border-top:1px solid var(--glass-border);
+  display:flex;justify-content:flex-end;background:rgba(0,0,0,.2);
+}
+.pm-footer .btn{padding:14px 26px;font-size:15px}
+@media (max-width: 720px){
+  .modal-card.product-modal{max-height:95vh}
+  .pm-body{grid-template-columns:1fr}
+  .pm-thumb{aspect-ratio:16/10;border-radius:var(--radius) var(--radius) 0 0}
+  .pm-info{padding:20px}
+  .pm-info h3{font-size:20px}
+  .pm-footer{padding:14px 18px;justify-content:stretch}
+  .pm-footer .btn{width:100%;justify-content:center}
+}
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
