@@ -385,7 +385,7 @@ main{padding-top:calc(var(--header-h) + 20px)}
   transition:background .2s,transform .2s;
 }
 .modal-close:hover{background:rgba(0,0,0,.75);transform:rotate(90deg)}
-.pm-body{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start}
+.pm-body{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:center}
 .pm-thumb{
   width:100%;aspect-ratio:1/1;
   background:rgba(255,255,255,.04);
@@ -437,9 +437,9 @@ main{padding-top:calc(var(--header-h) + 20px)}
 }
 .slides .slide{overflow:hidden}
 .slides .slide img{
-  transform:scale(1.05) translate3d(-1.5%,-1.2%,0);
-  animation:heroImageMotion 14s ease-in-out infinite alternate;
-  will-change:transform;backface-visibility:hidden;
+  transform:none;
+  animation:none;
+  will-change:auto;backface-visibility:hidden;
 }
 
 .slides .slide .cap{animation:heroCaptionIn .65s cubic-bezier(.2,.7,.2,1) both}
