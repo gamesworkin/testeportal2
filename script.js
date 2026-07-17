@@ -1,4 +1,4 @@
-﻿/* =================================================================
+/* =================================================================
    WORKIN'STORE — script.js
    HTML5 + CSS3 + JS puro (Vanilla). Persistência: Firebase Auth + RTDB.
    Imagens salvas em Base64 no Realtime Database (sem Storage).
@@ -247,8 +247,10 @@ function updateSlider() {
 }
 function restartSlideTimer() {
   clearInterval(state.slideTimer);
-  if (Object.keys(state.banners).length > 1)
-    state.slideTimer = setInterval(() => { state.slideIndex++; updateSlider(); }, 5000);
+  state.slideTimer = setInterval(() => {
+    state.slideIndex++;
+    updateSlider();
+  }, 5000);
 }
 function renderCategoryChips() {
   const cats = Object.entries(state.categories);
